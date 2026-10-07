@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>USC Historic Buildings</title>
+  <style>
+    body { max-width:760px; margin:0 auto; padding:28px 20px; color:#1f2933; font:16px/1.45 Arial, sans-serif; }
+    #building-links { list-style:none; margin:22px 0 0; padding:0; }
+    #building-links li { margin:0 0 28px; padding:0 0 28px; border-bottom:1px solid #b8c1c7; }
+    .building-link { display:inline-block; margin-bottom:12px; color:#5a1831; font-size:1.2rem; font-weight:bold; }
+    .building-photo { display:block; width:100%; max-width:520px; max-height:320px; margin:4px 0 10px; object-fit:cover; border:1px solid #68737d; }
+    .photo-source { display:inline-block; font-size:.9rem; }
+  </style>
 </head>
 <body>
   <h1>USC Historic Buildings</h1>
@@ -56,18 +64,21 @@
           const link = document.createElement('a');
           link.href = `viewer.html?building_id=${encodeURIComponent(building.building_id)}`;
           link.textContent = building.name;
+          link.className = 'building-link';
           item.append(link);
           const photo = photos[building.building_id];
           if (photo) {
             const image = document.createElement('img');
             image.src = photo.image_url;
             image.alt = photo.alt_text;
+            image.className = 'building-photo';
             const source = document.createElement('a');
             source.href = photo.source_page_url;
             source.target = '_blank';
             source.rel = 'noreferrer';
             source.textContent = photo.title;
-            item.append(document.createElement('br'), image, document.createElement('br'), source);
+            source.className = 'photo-source';
+            item.append(image, source);
           }
           list.append(item);
         });
