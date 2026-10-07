@@ -21,16 +21,12 @@
     button { color:white; background:var(--accent); cursor:pointer; font-weight:bold; }
     .controls { display:grid; grid-template-columns:1fr; gap:10px; }
     .controls label { margin-top:0; }
-    .map-heading { display:flex; justify-content:space-between; align-items:baseline; margin:18px 0 6px; }
-    .map-heading p { margin:0; font-size:.78rem; }
-    .campus-map { position:relative; height:320px; overflow:hidden; border:2px solid var(--line); background:#e6ece7; }
-    .campus-map::before { content:""; position:absolute; inset:18px 35px 30px 25px; border:22px solid #c5ced0; border-radius:50% 45% 50% 42%; transform:rotate(-10deg); }
-    .campus-map::after { content:"Horseshoe\A University of South Carolina\A Columbia Campus"; white-space:pre; position:absolute; top:118px; left:98px; color:#54616a; font-size:.82rem; text-align:center; }
-    .road { position:absolute; background:#fff; border:1px solid #87939a; transform:rotate(-13deg); }
-    .road.one { width:360px; height:20px; top:77px; left:35px; }.road.two { width:330px; height:18px; top:236px; left:63px; transform:rotate(18deg); }
-    .marker { position:absolute; z-index:2; width:30px; height:30px; padding:0; border:2px solid white; border-radius:50%; background:var(--accent); box-shadow:0 1px 2px #333; font-size:.78rem; }
-    .marker:hover, .marker:focus { outline:3px solid #f2bd3e; outline-offset:2px; }
-    .map-key { margin:8px 0 0; font-size:.86rem; }
+    .location-picker { margin:18px 0; }
+    .building-list { list-style:none; margin:10px 0 0; padding:0; border:2px solid var(--line); }
+    .building-list li + li { border-top:1px solid var(--line); }
+    .building-list button { color:var(--ink); background:white; border:0; text-align:left; }
+    .building-list button:hover, .building-list button:focus { color:white; background:var(--accent); }
+    .area-message { margin:8px 0 0; font-size:.88rem; }
     .tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
     .tag { border:1px solid var(--line); padding:3px 7px; font-size:.82rem; background:var(--wash); }
     .timeline { padding-left:20px; margin:8px 0; }
@@ -65,12 +61,16 @@
         </div>
       </div>
 
-      <section aria-labelledby="map-title">
-        <div class="map-heading"><h2 id="map-title">Explore the campus</h2><p>Not to scale</p></div>
-        <div id="campus-map" class="campus-map" role="group" aria-label="Campus map with building markers">
-          <span class="road one" aria-hidden="true"></span><span class="road two" aria-hidden="true"></span>
-        </div>
-        <p id="map-key" class="map-key">Tap a numbered pin to view that building.</p>
+      <section class="location-picker" aria-labelledby="area-title">
+        <h2 id="area-title">Explore by location</h2>
+        <label for="area-select">Campus area</label>
+        <select id="area-select">
+          <option value="all">All locations</option>
+          <option value="horseshoe">USC Horseshoe</option>
+          <option value="main-campus">USC Main Campus</option>
+        </select>
+        <p id="area-message" class="area-message">Choose a building to view its history and sources.</p>
+        <ul id="building-list" class="building-list" aria-label="Buildings in selected location"></ul>
       </section>
 
       <section id="building-content" class="card" aria-live="polite">
@@ -117,14 +117,15 @@
     */
     const WORKBOOK_URL = './USC_AI_Guided_Tour_Database.xlsx';
     const PHOTO_DATABASE_URL = './USC_Buildings_Chatbox_Database';
-    const PIN_LOCATIONS = {
-      usc_bldg_001: { x: 73, y: 55 }, // Thomas Cooper Library
-      usc_bldg_002: { x: 35, y: 50 }, // President's House
-      usc_bldg_003: { x: 58, y: 34 }  // McKissick Museum
+    const BUILDING_AREAS = {
+      usc_bldg_001: 'main-campus',
+      usc_bldg_002: 'horseshoe',
+      usc_bldg_003: 'horseshoe'
     };
     let buildings = [], photos = {}, selectedBuilding = null;
-    const map = document.querySelector('#campus-map');
-    const key = document.querySelector('#map-key');
+    const areaSelect = document.querySelector('#area-select');
+    const buildingList = document.querySelector('#building-list');
+    const areaMessage = document.querySelector('#area-message');
 
     const rows = (workbook, sheetName) => XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
     async function loadWorkbook() {
@@ -136,14 +137,14 @@
       const sourceRows = rows(workbook, 'Sources');
       const sourceLinks = rows(workbook, 'SourceLinks');
       const sources = Object.fromEntries(sourceRows.map(source => [source.source_id, source]));
-      return buildingRows.filter(row => PIN_LOCATIONS[row.building_id]).map(row => ({
+      return buildingRows.filter(row => BUILDING_AREAS[row.building_id]).map(row => ({
         id: row.building_id, name: row.name, dates: row.date_label, summary: row.summary,
         tags: [row.current_use, row.architectural_style].filter(Boolean),
         timeline: eventRows.filter(event => event.building_id === row.building_id)
           .map(event => `${event.start_date_text || 'Date not listed'} — ${event.event_title}`),
         sources: sourceLinks.filter(link => link.building_id === row.building_id)
           .map(link => sources[link.source_id]).filter(Boolean),
-        ...PIN_LOCATIONS[row.building_id]
+        area: BUILDING_AREAS[row.building_id]
       }));
     }
     async function loadPhotos() {
@@ -180,25 +181,29 @@
         document.querySelector('#photo-source').href = photo.source_page_url || photo.license_url;
       }
     }
-    function addPins() {
-      buildings.forEach((building, index) => {
-        const pin = document.createElement('button');
-        pin.className = 'marker'; pin.type = 'button'; pin.textContent = index + 1;
-        pin.title = building.name; pin.setAttribute('aria-label', `Pin ${index + 1}: ${building.name}`);
-        pin.style.left = `${building.x}%`; pin.style.top = `${building.y}%`;
-        pin.addEventListener('click', () => { selectedBuilding = building; renderBuilding(building); key.textContent = `Selected: ${building.name}`; document.querySelector('#chat-answer').style.display = 'none'; });
-        map.append(pin);
+    function renderBuildingList() {
+      const selectedArea = areaSelect.value;
+      const visibleBuildings = selectedArea === 'all' ? buildings : buildings.filter(building => building.area === selectedArea);
+      buildingList.replaceChildren();
+      visibleBuildings.forEach(building => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button'; button.textContent = building.name;
+        button.addEventListener('click', () => { selectedBuilding = building; renderBuilding(building); areaMessage.textContent = `Selected: ${building.name}`; document.querySelector('#chat-answer').style.display = 'none'; });
+        item.append(button); buildingList.append(item);
       });
-      key.textContent = buildings.map((building, index) => `${index + 1}. ${building.name}`).join('  •  ');
+      areaMessage.textContent = visibleBuildings.length ? `Select a building in ${areaSelect.options[areaSelect.selectedIndex].text}.` : 'No buildings are available in this area yet.';
     }
+    areaSelect.addEventListener('change', renderBuildingList);
     Promise.all([loadWorkbook(), loadPhotos()]).then(([buildingData, photoData]) => {
       buildings = buildingData; photos = photoData;
       const requestedBuildingId = new URLSearchParams(window.location.search).get('building_id');
       selectedBuilding = buildings.find(building => building.id === requestedBuildingId) || buildings[0];
-      addPins(); renderBuilding(selectedBuilding);
-      key.textContent = requestedBuildingId ? `Selected: ${selectedBuilding.name}` : key.textContent;
+      areaSelect.value = selectedBuilding.area;
+      renderBuildingList(); renderBuilding(selectedBuilding);
+      if (requestedBuildingId) areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
     }).catch(() => {
-      key.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
+      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
       document.querySelector('#building-name').textContent = 'Building data unavailable';
       document.querySelector('#building-summary').textContent = 'The page is ready to load the project workbook when it is hosted beside this file.';
     });
