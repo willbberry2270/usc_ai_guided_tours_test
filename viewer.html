@@ -1,0 +1,225 @@
+<!doctype html>
+<!-- Visitor interface -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>USC Buildings | Visitor Guide Prototype</title>
+  <style>
+    :root { --ink:#1f2933; --line:#68737d; --paper:#fff; --wash:#edf1f3; --accent:#5a1831; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#dce2e5; color:var(--ink); font:16px/1.45 Arial, sans-serif; }
+    .phone { width:min(100%, 470px); min-height:100vh; margin:auto; background:var(--paper); border-inline:1px solid var(--line); }
+    header { padding:18px 22px; color:white; background:var(--accent); }
+    header p, .hero p { margin:4px 0 0; }
+    h1 { margin:0; font-size:1.3rem; } h2 { margin:0 0 8px; font-size:1.15rem; } h3 { margin:0; font-size:1rem; }
+    main { padding:18px; }
+    .notice, .card, .chat { border:2px solid var(--line); padding:14px; margin:14px 0; }
+    .notice { background:var(--wash); border-left:7px solid var(--accent); }
+    .hero { min-height:170px; padding:20px; color:white; background:#66747d; display:flex; flex-direction:column; justify-content:end; }
+    label { display:block; margin:13px 0 5px; font-weight:bold; }
+    select, button, input { width:100%; min-height:43px; padding:9px; border:1px solid var(--line); border-radius:0; font:inherit; }
+    button { color:white; background:var(--accent); cursor:pointer; font-weight:bold; }
+    .controls { display:grid; grid-template-columns:1fr; gap:10px; }
+    .controls label { margin-top:0; }
+    .location-picker { margin:18px 0; }
+    .building-list { list-style:none; margin:10px 0 0; padding:0; border:2px solid var(--line); }
+    .building-list li + li { border-top:1px solid var(--line); }
+    .building-list button { color:var(--ink); background:white; border:0; text-align:left; }
+    .building-list button:hover, .building-list button:focus { color:white; background:var(--accent); }
+    .area-message { margin:8px 0 0; font-size:.88rem; }
+    .tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+    .tag { border:1px solid var(--line); padding:3px 7px; font-size:.82rem; background:var(--wash); }
+    .timeline { padding-left:20px; margin:8px 0; }
+    .source { font-size:.88rem; }
+    .building-photo { margin:16px 0; }
+    .building-photo img { display:block; width:100%; max-height:250px; object-fit:cover; border:1px solid var(--line); }
+    .building-photo figcaption { margin-top:6px; font-size:.82rem; }
+    .chat { background:var(--wash); }
+    .question { display:flex; gap:8px; margin-top:10px; }
+    .question input { flex:1; } .question button { width:auto; }
+    .answer { display:none; margin-top:10px; padding:10px; background:white; border:1px solid var(--line); }
+    footer { padding:18px; font-size:.8rem; color:#3d4952; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <h1>USC Historic Buildings</h1>
+      <p>Visitor Guide • Low-Fidelity Prototype</p>
+    </header>
+
+    <main>
+      <section class="notice" aria-label="QR code entry point">
+        <strong>Welcome.</strong> This screen would open after a visitor scans a building’s QR code. Select another building below to explore the prototype.
+      </section>
+
+      <div class="controls">
+        <div>
+          <label for="language">Language</label>
+          <select id="language"><option>English</option><option>Spanish</option><option>French</option></select>
+        </div>
+      </div>
+
+      <section class="location-picker" aria-labelledby="area-title">
+        <h2 id="area-title">Explore by location</h2>
+        <label for="area-select">Campus area</label>
+        <select id="area-select">
+          <option value="all">All locations</option>
+          <option value="horseshoe">USC Horseshoe</option>
+          <option value="main-campus">USC Main Campus</option>
+        </select>
+        <p id="area-message" class="area-message">Choose a building to view its history and sources.</p>
+        <ul id="building-list" class="building-list" aria-label="Buildings in selected location"></ul>
+      </section>
+
+      <section id="building-content" class="card" aria-live="polite">
+        <div class="hero">
+          <h2 id="building-name">Loading building information…</h2>
+          <p id="building-dates"></p>
+        </div>
+        <div class="tags" id="building-tags"></div>
+        <h2 style="margin-top:16px">About this building</h2>
+        <p id="building-summary"></p>
+        <figure id="building-photo" class="building-photo" hidden>
+          <img id="photo-image" alt="">
+          <figcaption><strong id="photo-title"></strong><br><span id="photo-caption"></span><br><a id="photo-source" target="_blank" rel="noreferrer">Photo source and rights information</a></figcaption>
+        </figure>
+        <h3>Key dates</h3>
+        <ul class="timeline" id="building-timeline"></ul>
+        <p class="source"><strong>Sources:</strong> <span id="building-sources"></span></p>
+      </section>
+
+      <section class="chat" aria-labelledby="chat-title">
+        <h2 id="chat-title">Ask the building guide</h2>
+        <p>Ask a question about the selected building. The guide will adapt the level of detail based on your question.</p>
+        <div class="question">
+          <input id="chat-question" type="text" placeholder="Example: When did it open?">
+          <button id="ask-button" type="button">Ask</button>
+        </div>
+        <div id="chat-answer" class="answer" aria-live="polite"></div>
+      </section>
+    </main>
+    <footer>
+      Prototype connection: Building data, timelines, and citations are retrieved from the project database. Published content is intended to pass through the staff review workflow before appearing here.
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+  <script>
+    /*
+      GITHUB DATA CONNECTION
+      Place the workbook in this same GitHub Pages folder using this filename: USC_AI_Guided_Tour_Database.xlsx.
+      This page reads the Buildings, BuildingEvents, Sources, and SourceLinks sheets directly.
+      It reads reusable building photos from USC_Buildings_Chatbox_Database.
+      The selected building_id is also sent to POST /api/chat with { building_id, question, language }.
+    */
+    const WORKBOOK_URL = './USC_AI_Guided_Tour_Database.xlsx';
+    const PHOTO_DATABASE_URL = './USC_Buildings_Chatbox_Database';
+    const BUILDING_AREAS = {
+      usc_bldg_001: 'main-campus',
+      usc_bldg_002: 'horseshoe',
+      usc_bldg_003: 'horseshoe'
+    };
+    let buildings = [], photos = {}, selectedBuilding = null;
+    const areaSelect = document.querySelector('#area-select');
+    const buildingList = document.querySelector('#building-list');
+    const areaMessage = document.querySelector('#area-message');
+
+    const rows = (workbook, sheetName) => XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+    async function loadWorkbook() {
+      const response = await fetch(WORKBOOK_URL);
+      if (!response.ok) throw new Error(`Could not load ${WORKBOOK_URL}`);
+      const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' });
+      const buildingRows = rows(workbook, 'Buildings');
+      const eventRows = rows(workbook, 'BuildingEvents');
+      const sourceRows = rows(workbook, 'Sources');
+      const sourceLinks = rows(workbook, 'SourceLinks');
+      const sources = Object.fromEntries(sourceRows.map(source => [source.source_id, source]));
+      return buildingRows.filter(row => BUILDING_AREAS[row.building_id]).map(row => ({
+        id: row.building_id, name: row.name, dates: row.date_label, summary: row.summary,
+        tags: [row.current_use, row.architectural_style].filter(Boolean),
+        timeline: eventRows.filter(event => event.building_id === row.building_id)
+          .map(event => `${event.start_date_text || 'Date not listed'} — ${event.event_title}`),
+        sources: sourceLinks.filter(link => link.building_id === row.building_id)
+          .map(link => sources[link.source_id]).filter(Boolean),
+        area: BUILDING_AREAS[row.building_id]
+      }));
+    }
+    async function loadPhotos() {
+      const response = await fetch(PHOTO_DATABASE_URL);
+      if (!response.ok) throw new Error(`Could not load ${PHOTO_DATABASE_URL}`);
+      const SQL = await initSqlJs({ locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/${file}` });
+      const database = new SQL.Database(new Uint8Array(await response.arrayBuffer()));
+      const result = database.exec(`SELECT building_id, title, caption, creator, source_organization, source_page_url, image_url, license_url, alt_text
+        FROM building_photos WHERE redistribution_allowed = 1 AND image_url IS NOT NULL AND image_url <> ''
+        ORDER BY building_id, CASE era WHEN 'current' THEN 0 ELSE 1 END`)[0];
+      const output = {};
+      if (result) result.values.forEach(row => {
+        const photo = Object.fromEntries(result.columns.map((column, index) => [column, row[index]]));
+        if (!output[photo.building_id]) output[photo.building_id] = photo;
+      });
+      database.close();
+      return output;
+    }
+    function renderBuilding(building) {
+      document.querySelector('#building-name').textContent = building.name;
+      document.querySelector('#building-dates').textContent = building.dates;
+      document.querySelector('#building-summary').textContent = building.summary;
+      document.querySelector('#building-tags').innerHTML = building.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+      document.querySelector('#building-timeline').innerHTML = building.timeline.map(event => `<li>${event}</li>`).join('');
+      document.querySelector('#building-sources').innerHTML = building.sources.map(source => `<a href="${source.source_url}" target="_blank" rel="noreferrer">${source.source_title}</a>`).join('; ');
+      const photo = photos[building.id];
+      const figure = document.querySelector('#building-photo');
+      figure.hidden = !photo;
+      if (photo) {
+        document.querySelector('#photo-image').src = photo.image_url;
+        document.querySelector('#photo-image').alt = photo.alt_text;
+        document.querySelector('#photo-title').textContent = photo.title;
+        document.querySelector('#photo-caption').textContent = `${photo.caption} Credit: ${photo.creator}, ${photo.source_organization}.`;
+        document.querySelector('#photo-source').href = photo.source_page_url || photo.license_url;
+      }
+    }
+    function renderBuildingList() {
+      const selectedArea = areaSelect.value;
+      const visibleBuildings = selectedArea === 'all' ? buildings : buildings.filter(building => building.area === selectedArea);
+      buildingList.replaceChildren();
+      visibleBuildings.forEach(building => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button'; button.textContent = building.name;
+        button.addEventListener('click', () => { selectedBuilding = building; renderBuilding(building); areaMessage.textContent = `Selected: ${building.name}`; document.querySelector('#chat-answer').style.display = 'none'; });
+        item.append(button); buildingList.append(item);
+      });
+      areaMessage.textContent = visibleBuildings.length ? `Select a building in ${areaSelect.options[areaSelect.selectedIndex].text}.` : 'No buildings are available in this area yet.';
+    }
+    areaSelect.addEventListener('change', renderBuildingList);
+    Promise.all([loadWorkbook(), loadPhotos()]).then(([buildingData, photoData]) => {
+      buildings = buildingData; photos = photoData;
+      const requestedBuildingId = new URLSearchParams(window.location.search).get('building_id');
+      selectedBuilding = buildings.find(building => building.id === requestedBuildingId) || buildings[0];
+      areaSelect.value = selectedBuilding.area;
+      renderBuildingList(); renderBuilding(selectedBuilding);
+      if (requestedBuildingId) areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
+    }).catch(() => {
+      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
+      document.querySelector('#building-name').textContent = 'Building data unavailable';
+      document.querySelector('#building-summary').textContent = 'The page is ready to load the project workbook when it is hosted beside this file.';
+    });
+
+    document.querySelector('#ask-button').addEventListener('click', async () => {
+      const question = document.querySelector('#chat-question').value.trim();
+      if (!question || !selectedBuilding) return;
+      const answer = document.querySelector('#chat-answer');
+      answer.style.display = 'block';
+      answer.textContent = `Prototype answer: ${selectedBuilding.summary} In the completed system, this answer will come from the database-backed chatbot and include its supporting citations.`;
+      /* Production example:
+      const response = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({building_id:selectedBuilding.id, question, language:document.querySelector('#language').value}) });
+      const data = await response.json(); answer.textContent = data.answer;
+      */
+    });
+  </script>
+</body>
+</html>

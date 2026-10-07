@@ -54,7 +54,7 @@
         buildings.forEach(building => {
           const item = document.createElement('li');
           const link = document.createElement('a');
-          link.href = `index.html?building_id=${encodeURIComponent(building.building_id)}`;
+          link.href = `viewer.html?building_id=${encodeURIComponent(building.building_id)}`;
           link.textContent = building.name;
           item.append(link);
           const photo = photos[building.building_id];
