@@ -123,12 +123,12 @@
   <script>
     /*
       GITHUB DATA CONNECTION
-      Place the workbook in this same GitHub Pages folder using this filename: USC_AI_Guided_Tour_Database(1).xlsx.
+      Place the workbook in this same GitHub Pages folder using this filename: USC_AI_Guided_Tour_Database.xlsx.
       This page reads the Buildings, BuildingEvents, Sources, SourceLinks, and LocalizedContent sheets directly.
       It reads reusable building photos from USC_Buildings_Chatbox_Database.
       The selected building_id is also sent to POST /api/chat with { building_id, question, language }.
     */
-    const WORKBOOK_URL = './USC_AI_Guided_Tour_Database(1).xlsx';
+    const WORKBOOK_URL = './USC_AI_Guided_Tour_Database.xlsx';
     const PHOTO_DATABASE_URL = './USC_Buildings_Chatbox_Database';
     const BUILDING_AREAS = {
       usc_bldg_001: 'main-campus',
@@ -228,7 +228,7 @@
       renderBuildingList(); renderBuilding(selectedBuilding);
       if (requestedBuildingId) areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
     }).catch(() => {
-      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database(1).xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
+      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
       document.querySelector('#building-name').textContent = 'Building data unavailable';
       document.querySelector('#building-summary').textContent = 'The page is ready to load the project workbook when it is hosted beside this file.';
     });
