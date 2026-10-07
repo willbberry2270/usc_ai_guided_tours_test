@@ -58,7 +58,19 @@
       <div class="controls">
         <div>
           <label for="language">Language</label>
-          <select id="language"><option>English</option><option>Spanish</option><option>French</option></select>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+          </select>
+        </div>
+        <div>
+          <label for="reading-level">Reading level</label>
+          <select id="reading-level">
+            <option value="college">College level</option>
+            <option value="secondary">High school / middle school</option>
+            <option value="elementary">Elementary school</option>
+          </select>
         </div>
       </div>
 
@@ -86,7 +98,7 @@
           <img id="photo-image" alt="">
           <figcaption><strong id="photo-title"></strong><br><span id="photo-caption"></span><br><a id="photo-source" target="_blank" rel="noreferrer">Photo source and rights information</a></figcaption>
         </figure>
-        <h3>Key dates</h3>
+        <h3 id="facts-title">Key facts</h3>
         <ul class="timeline" id="building-timeline"></ul>
         <p class="source"><strong>Sources:</strong> <span id="building-sources"></span></p>
       </section>
@@ -111,12 +123,12 @@
   <script>
     /*
       GITHUB DATA CONNECTION
-      Place the workbook in this same GitHub Pages folder using this filename: USC_AI_Guided_Tour_Database.xlsx.
-      This page reads the Buildings, BuildingEvents, Sources, and SourceLinks sheets directly.
+      Place the workbook in this same GitHub Pages folder using this filename: USC_AI_Guided_Tour_Database(1).xlsx.
+      This page reads the Buildings, BuildingEvents, Sources, SourceLinks, and LocalizedContent sheets directly.
       It reads reusable building photos from USC_Buildings_Chatbox_Database.
       The selected building_id is also sent to POST /api/chat with { building_id, question, language }.
     */
-    const WORKBOOK_URL = './USC_AI_Guided_Tour_Database.xlsx';
+    const WORKBOOK_URL = './USC_AI_Guided_Tour_Database(1).xlsx';
     const PHOTO_DATABASE_URL = './USC_Buildings_Chatbox_Database';
     const BUILDING_AREAS = {
       usc_bldg_001: 'main-campus',
@@ -127,6 +139,8 @@
     const areaSelect = document.querySelector('#area-select');
     const buildingList = document.querySelector('#building-list');
     const areaMessage = document.querySelector('#area-message');
+    const languageSelect = document.querySelector('#language');
+    const readingLevelSelect = document.querySelector('#reading-level');
 
     const rows = (workbook, sheetName) => XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
     async function loadWorkbook() {
@@ -137,6 +151,7 @@
       const eventRows = rows(workbook, 'BuildingEvents');
       const sourceRows = rows(workbook, 'Sources');
       const sourceLinks = rows(workbook, 'SourceLinks');
+      const localizedRows = rows(workbook, 'LocalizedContent');
       const sources = Object.fromEntries(sourceRows.map(source => [source.source_id, source]));
       return buildingRows.filter(row => BUILDING_AREAS[row.building_id]).map(row => ({
         id: row.building_id, name: row.name, dates: row.date_label, summary: row.summary,
@@ -145,6 +160,7 @@
           .map(event => `${event.start_date_text || 'Date not listed'} — ${event.event_title}`),
         sources: sourceLinks.filter(link => link.building_id === row.building_id)
           .map(link => sources[link.source_id]).filter(Boolean),
+        localizedContent: localizedRows.filter(content => content.building_id === row.building_id),
         area: BUILDING_AREAS[row.building_id]
       }));
     }
@@ -164,12 +180,18 @@
       database.close();
       return output;
     }
+    function getLocalizedContent(building) {
+      return building.localizedContent.find(content => content.language_code === languageSelect.value && content.reading_level === readingLevelSelect.value)
+        || building.localizedContent.find(content => content.language_code === 'en' && content.reading_level === 'college');
+    }
     function renderBuilding(building) {
-      document.querySelector('#building-name').textContent = building.name;
+      const localized = getLocalizedContent(building);
+      document.querySelector('#building-name').textContent = localized.display_name;
       document.querySelector('#building-dates').textContent = building.dates;
-      document.querySelector('#building-summary').textContent = building.summary;
+      document.querySelector('#building-summary').textContent = localized.full_description;
       document.querySelector('#building-tags').innerHTML = building.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-      document.querySelector('#building-timeline').innerHTML = building.timeline.map(event => `<li>${event}</li>`).join('');
+      document.querySelector('#facts-title').textContent = { en: 'Key facts', es: 'Datos clave', fr: 'Faits clés' }[languageSelect.value];
+      document.querySelector('#building-timeline').innerHTML = localized.key_facts.split(';').map(fact => `<li>${fact.trim()}</li>`).join('');
       document.querySelector('#building-sources').innerHTML = building.sources.map(source => `<a href="${source.source_url}" target="_blank" rel="noreferrer">${source.source_title}</a>`).join('; ');
       const photo = photos[building.id];
       const figure = document.querySelector('#building-photo');
@@ -196,6 +218,8 @@
       areaMessage.textContent = visibleBuildings.length ? `Select a building in ${areaSelect.options[areaSelect.selectedIndex].text}.` : 'No buildings are available in this area yet.';
     }
     areaSelect.addEventListener('change', renderBuildingList);
+    languageSelect.addEventListener('change', () => { if (selectedBuilding) renderBuilding(selectedBuilding); });
+    readingLevelSelect.addEventListener('change', () => { if (selectedBuilding) renderBuilding(selectedBuilding); });
     Promise.all([loadWorkbook(), loadPhotos()]).then(([buildingData, photoData]) => {
       buildings = buildingData; photos = photoData;
       const requestedBuildingId = new URLSearchParams(window.location.search).get('building_id');
@@ -204,7 +228,7 @@
       renderBuildingList(); renderBuilding(selectedBuilding);
       if (requestedBuildingId) areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
     }).catch(() => {
-      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
+      areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database(1).xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
       document.querySelector('#building-name').textContent = 'Building data unavailable';
       document.querySelector('#building-summary').textContent = 'The page is ready to load the project workbook when it is hosted beside this file.';
     });
