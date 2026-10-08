@@ -4,42 +4,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>USC Buildings | Visitor Guide Prototype</title>
+  <title>USC AI Tours | Visitor Guide</title>
   <style>
-    :root { --ink:#1f2933; --line:#68737d; --paper:#fff; --wash:#edf1f3; --accent:#5a1831; }
+    :root { --garnet:#73000a; --gold:#ffcf01; --ink:#1d1d1d; --line:#c8ccce; --paper:#fff; --wash:#f4f4f4; }
     * { box-sizing:border-box; }
-    body { margin:0; background:#dce2e5; color:var(--ink); font:16px/1.45 Arial, sans-serif; }
-    .phone { width:min(100%, 470px); min-height:100vh; margin:auto; background:var(--paper); border-inline:1px solid var(--line); }
-    header { padding:18px 22px; color:white; background:var(--accent); }
+    body { margin:0; background:var(--wash); color:var(--ink); font:16px/1.55 Arial, Helvetica, sans-serif; }
+    .phone { width:min(100%, 1040px); min-height:100vh; margin:auto; background:var(--paper); box-shadow:0 0 28px rgba(0,0,0,.08); }
+    header { padding:25px clamp(22px, 5vw, 58px); color:white; background:var(--garnet); border-bottom:6px solid var(--gold); }
     header p, .hero p { margin:4px 0 0; }
-    h1 { margin:0; font-size:1.3rem; } h2 { margin:0 0 8px; font-size:1.15rem; } h3 { margin:0; font-size:1rem; }
-    main { padding:18px; }
-    .notice, .card, .chat { border:2px solid var(--line); padding:14px; margin:14px 0; }
-    .notice { background:var(--wash); border-left:7px solid var(--accent); }
-    .hero { min-height:170px; padding:20px; color:white; background:#66747d; display:flex; flex-direction:column; justify-content:end; }
+    h1, h2, h3 { font-family:Georgia, "Times New Roman", serif; }
+    h1 { margin:0; font-size:clamp(1.8rem, 4vw, 2.5rem); line-height:1.1; } h2 { margin:0 0 8px; font-size:1.35rem; } h3 { margin:0; font-size:1.1rem; }
+    header p { color:#f7e8e8; font-weight:bold; letter-spacing:.04em; text-transform:uppercase; font-size:.77rem; }
+    main { padding:clamp(24px, 5vw, 52px); }
+    .card, .chat { border:1px solid var(--line); padding:clamp(20px, 3vw, 30px); margin:25px 0; background:white; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+    .beta-banner { padding:11px 18px; color:var(--ink); background:var(--gold); font-size:.88rem; font-weight:bold; text-align:center; }
+    .hero { min-height:210px; padding:clamp(24px, 5vw, 45px); color:white; background:linear-gradient(120deg, #520007, var(--garnet)); display:flex; flex-direction:column; justify-content:end; border-left:8px solid var(--gold); }
+    .hero h2 { font-size:clamp(1.8rem, 4vw, 2.75rem); line-height:1.1; }
     label { display:block; margin:13px 0 5px; font-weight:bold; }
-    select, button, input { width:100%; min-height:43px; padding:9px; border:1px solid var(--line); border-radius:0; font:inherit; }
-    button { color:white; background:var(--accent); cursor:pointer; font-weight:bold; }
-    .controls { display:grid; grid-template-columns:1fr; gap:10px; }
+    select, button, input { width:100%; min-height:46px; padding:10px 12px; border:1px solid #8e969b; border-radius:0; font:inherit; }
+    select { cursor:pointer; appearance:none; padding-right:48px; border:2px solid var(--garnet); background-color:white; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Cpath fill='%2373000a' d='M1 1l7 7 7-7' stroke='%2373000a' stroke-width='2'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:calc(100% - 16px) 50%; background-size:16px 10px; font-weight:bold; }
+    select:hover, select:focus { outline:3px solid rgba(255,207,1,.7); outline-offset:2px; }
+    input { background:white; }
+    button { color:white; background:var(--garnet); border-color:var(--garnet); cursor:pointer; font-weight:bold; transition:background .15s ease, color .15s ease; }
+    button:hover, button:focus-visible { color:var(--ink); background:var(--gold); border-color:var(--gold); }
+    .controls { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; padding-bottom:23px; border-bottom:1px solid var(--line); }
     .controls label { margin-top:0; }
-    .location-picker { margin:18px 0; }
-    .building-list { list-style:none; margin:10px 0 0; padding:0; border:2px solid var(--line); }
-    .building-list li + li { border-top:1px solid var(--line); }
-    .building-list button { color:var(--ink); background:white; border:0; text-align:left; }
-    .building-list button:hover, .building-list button:focus { color:white; background:var(--accent); }
-    .area-message { margin:8px 0 0; font-size:.88rem; }
-    .tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
-    .tag { border:1px solid var(--line); padding:3px 7px; font-size:.82rem; background:var(--wash); }
-    .timeline { padding-left:20px; margin:8px 0; }
-    .source { font-size:.88rem; }
-    .building-photo { margin:16px 0; }
-    .building-photo img { display:block; width:100%; max-height:250px; object-fit:cover; border:1px solid var(--line); }
-    .building-photo figcaption { margin-top:6px; font-size:.82rem; }
-    .chat { background:var(--wash); }
-    .question { display:flex; gap:8px; margin-top:10px; }
-    .question input { flex:1; } .question button { width:auto; }
-    .answer { display:none; margin-top:10px; padding:10px; background:white; border:1px solid var(--line); }
-    footer { padding:18px; font-size:.8rem; color:#3d4952; }
+    .location-picker { margin:28px 0; }
+    .building-list { list-style:none; margin:12px 0 0; padding:0; border-top:3px solid var(--garnet); }
+    .building-list li { border:1px solid var(--line); border-top:0; }
+    .building-list button { color:var(--garnet); background:white; border:0; text-align:left; font-weight:bold; }
+    .building-list button:hover, .building-list button:focus { color:white; background:var(--garnet); }
+    .area-message { margin:8px 0 0; font-size:.92rem; color:#4d4d4d; }
+    .tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
+    .tag { border:1px solid #a6acad; padding:4px 8px; font-size:.8rem; background:var(--wash); }
+    .timeline { padding-left:21px; margin:10px 0; }
+    .timeline li + li { margin-top:6px; }
+    .source { font-size:.9rem; }
+    .source a { color:var(--garnet); }
+    .building-photo { margin:22px 0; }
+    .building-photo img { display:block; width:100%; max-height:360px; object-fit:cover; border:1px solid var(--line); }
+    .building-photo figcaption { margin-top:8px; font-size:.82rem; }
+    .building-photo a { color:var(--garnet); }
+    .chat { background:#f7f7f7; border-top:5px solid var(--gold); }
+    .question { display:flex; gap:10px; margin-top:14px; }
+    .question input { flex:1; } .question button { width:auto; min-width:94px; }
+    .answer { display:none; margin-top:12px; padding:12px; background:white; border-left:4px solid var(--gold); }
+    footer { padding:24px clamp(22px, 5vw, 58px); color:#fff; background:var(--garnet); font-size:.82rem; }
+    .hidden { display:none; }
+    @media (max-width:560px) { .controls { grid-template-columns:1fr; gap:14px; } .question { flex-direction:column; } .question button { width:100%; } }
     .hidden { display:none; }
   </style>
 </head>
@@ -47,26 +59,25 @@
   <div class="phone">
     <header>
       <h1>USC Historic Buildings</h1>
-      <p>Visitor Guide • Low-Fidelity Prototype</p>
+      <p>Visitor Guide</p>
     </header>
+    <div class="beta-banner" role="status">This Program is in Beta and not fully functional.</div>
 
     <main>
-      <section class="notice" aria-label="QR code entry point">
-        <strong>Welcome.</strong> This screen would open after a visitor scans a building’s QR code. Select another building below to explore the prototype.
-      </section>
-
       <div class="controls">
         <div>
-          <label for="language">Language</label>
-          <select id="language">
+          <label id="language-label" for="language">Language — choose an option</label>
+          <select id="language" required>
+            <option value="" selected disabled>Choose a language</option>
             <option value="en">English</option>
             <option value="es">Spanish</option>
             <option value="fr">French</option>
           </select>
         </div>
         <div>
-          <label for="reading-level">Reading level</label>
-          <select id="reading-level">
+          <label id="reading-level-label" for="reading-level">Reading level — choose an option</label>
+          <select id="reading-level" required>
+            <option value="" selected disabled>Choose a reading level</option>
             <option value="college">College level</option>
             <option value="secondary">High school / middle school</option>
             <option value="elementary">Elementary school</option>
@@ -76,17 +87,18 @@
 
       <section class="location-picker" aria-labelledby="area-title">
         <h2 id="area-title">Explore by location</h2>
-        <label for="area-select">Campus area</label>
-        <select id="area-select">
+        <label id="area-label" for="area-select">Campus area — choose an option</label>
+        <select id="area-select" required>
+          <option value="" selected disabled>Choose a campus area</option>
           <option value="all">All locations</option>
           <option value="horseshoe">USC Horseshoe</option>
           <option value="main-campus">USC Main Campus</option>
         </select>
-        <p id="area-message" class="area-message">Choose a building to view its history and sources.</p>
-        <ul id="building-list" class="building-list" aria-label="Buildings in selected location"></ul>
+        <p id="area-message" class="area-message">Select a language, reading level, and campus area to begin.</p>
+        <ul id="building-list" class="building-list" aria-label="Buildings in selected location" hidden></ul>
       </section>
 
-      <section id="building-content" class="card" aria-live="polite">
+      <section id="building-content" class="card" aria-live="polite" hidden>
         <div class="hero">
           <h2 id="building-name">Loading building information…</h2>
           <p id="building-dates"></p>
@@ -103,7 +115,7 @@
         <p class="source"><strong>Sources:</strong> <span id="building-sources"></span></p>
       </section>
 
-      <section class="chat" aria-labelledby="chat-title">
+      <section id="chat-section" class="chat" aria-labelledby="chat-title" hidden>
         <h2 id="chat-title">Ask the building guide</h2>
         <p>Ask a question about the selected building. The guide will adapt the level of detail based on your question.</p>
         <div class="question">
@@ -114,7 +126,7 @@
       </section>
     </main>
     <footer>
-      Prototype connection: Building data, timelines, and citations are retrieved from the project database. Published content is intended to pass through the staff review workflow before appearing here.
+      Building histories, timelines and source links are provided through USC AI Tours data.
     </footer>
   </div>
 
@@ -141,6 +153,9 @@
     const areaMessage = document.querySelector('#area-message');
     const languageSelect = document.querySelector('#language');
     const readingLevelSelect = document.querySelector('#reading-level');
+    const buildingContent = document.querySelector('#building-content');
+    const chatSection = document.querySelector('#chat-section');
+    let requestedBuildingId = null;
 
     const rows = (workbook, sheetName) => XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
     async function loadWorkbook() {
@@ -204,7 +219,20 @@
         document.querySelector('#photo-source').href = photo.source_page_url || photo.license_url;
       }
     }
+    function hasTourSelections() {
+      return Boolean(languageSelect.value && readingLevelSelect.value && areaSelect.value);
+    }
+    function updateSelectionLabels() {
+      const labelFor = (select, label, emptyText) => {
+        const selectedText = select.selectedOptions[0]?.textContent;
+        label.textContent = select.value ? `${emptyText}: ${selectedText}` : `${emptyText} — choose an option`;
+      };
+      labelFor(languageSelect, document.querySelector('#language-label'), 'Language');
+      labelFor(readingLevelSelect, document.querySelector('#reading-level-label'), 'Reading level');
+      labelFor(areaSelect, document.querySelector('#area-label'), 'Campus area');
+    }
     function renderBuildingList() {
+      if (!hasTourSelections()) return;
       const selectedArea = areaSelect.value;
       const visibleBuildings = selectedArea === 'all' ? buildings : buildings.filter(building => building.area === selectedArea);
       buildingList.replaceChildren();
@@ -215,22 +243,44 @@
         button.addEventListener('click', () => { selectedBuilding = building; renderBuilding(building); areaMessage.textContent = `Selected: ${building.name}`; document.querySelector('#chat-answer').style.display = 'none'; });
         item.append(button); buildingList.append(item);
       });
-      areaMessage.textContent = visibleBuildings.length ? `Select a building in ${areaSelect.options[areaSelect.selectedIndex].text}.` : 'No buildings are available in this area yet.';
+      buildingList.hidden = !visibleBuildings.length;
+      if (!visibleBuildings.length) {
+        selectedBuilding = null;
+        buildingContent.hidden = true;
+        chatSection.hidden = true;
+        areaMessage.textContent = 'No buildings are available in this area yet.';
+        return;
+      }
+      selectedBuilding = visibleBuildings.find(building => building.id === selectedBuilding?.id)
+        || visibleBuildings.find(building => building.id === requestedBuildingId)
+        || visibleBuildings[0];
+      renderBuilding(selectedBuilding);
+      buildingContent.hidden = false;
+      chatSection.hidden = false;
+      areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
     }
-    areaSelect.addEventListener('change', renderBuildingList);
-    languageSelect.addEventListener('change', () => { if (selectedBuilding) renderBuilding(selectedBuilding); });
-    readingLevelSelect.addEventListener('change', () => { if (selectedBuilding) renderBuilding(selectedBuilding); });
+    function updateTourAvailability() {
+      updateSelectionLabels();
+      if (!hasTourSelections()) {
+        selectedBuilding = null;
+        buildingList.replaceChildren();
+        buildingList.hidden = true;
+        buildingContent.hidden = true;
+        chatSection.hidden = true;
+        areaMessage.textContent = 'Select a language, reading level, and campus area to begin.';
+        return;
+      }
+      renderBuildingList();
+    }
+    areaSelect.addEventListener('change', updateTourAvailability);
+    languageSelect.addEventListener('change', updateTourAvailability);
+    readingLevelSelect.addEventListener('change', updateTourAvailability);
     Promise.all([loadWorkbook(), loadPhotos()]).then(([buildingData, photoData]) => {
       buildings = buildingData; photos = photoData;
-      const requestedBuildingId = new URLSearchParams(window.location.search).get('building_id');
-      selectedBuilding = buildings.find(building => building.id === requestedBuildingId) || buildings[0];
-      areaSelect.value = selectedBuilding.area;
-      renderBuildingList(); renderBuilding(selectedBuilding);
-      if (requestedBuildingId) areaMessage.textContent = `Selected: ${selectedBuilding.name}`;
+      requestedBuildingId = new URLSearchParams(window.location.search).get('building_id');
+      updateTourAvailability();
     }).catch(() => {
       areaMessage.textContent = 'Add USC_AI_Guided_Tour_Database.xlsx and USC_Buildings_Chatbox_Database beside this page in GitHub Pages to load the building records and photographs.';
-      document.querySelector('#building-name').textContent = 'Building data unavailable';
-      document.querySelector('#building-summary').textContent = 'The page is ready to load the project workbook when it is hosted beside this file.';
     });
 
     document.querySelector('#ask-button').addEventListener('click', async () => {
@@ -238,7 +288,7 @@
       if (!question || !selectedBuilding) return;
       const answer = document.querySelector('#chat-answer');
       answer.style.display = 'block';
-      answer.textContent = `Prototype answer: ${selectedBuilding.summary} In the completed system, this answer will come from the database-backed chatbot and include its supporting citations.`;
+      answer.textContent = `Here’s what we found: ${selectedBuilding.summary}`;
       /* Production example:
       const response = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({building_id:selectedBuilding.id, question, language:document.querySelector('#language').value}) });
       const data = await response.json(); answer.textContent = data.answer;
